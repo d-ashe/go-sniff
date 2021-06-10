@@ -12,6 +12,7 @@ RUN go get -d -v
 RUN go build 
 
 RUN chmod +x go-scrt-events
-ENTRYPOINT [ "./go-sniff" ]
+#ENTRYPOINT [ "./go-sniff" ]
 
-CMD ["--config", "config.yml", "-v", "debug"]
+#CMD ["--config", "config.yml", "-v", "debug"]
+CMD ["/bin/bash"]
