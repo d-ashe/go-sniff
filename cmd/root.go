@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	c "github.com/d-ashe/config"
-	"github.com/d-ashe/pkg/sniff"
+	c "github.com/d-ashe/go-sniff/config"
+	//"github.com/d-ashe/pkg/go-sniff"
 )
 
 var (

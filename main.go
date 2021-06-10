@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/d-ashe/monitor/go-sniff/cmd"
+	"github.com/d-ashe/go-sniff/cmd"
 )
 
 func main() {
