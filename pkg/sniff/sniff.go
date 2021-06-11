@@ -25,34 +25,95 @@ type PacketDocument struct {
 }
 
 type LinkLayerDoc struct {
-  
+  LayerType  string  `json:"layer_type"`
+  SrcMAC     string  `json:"src_mac"`
+  DstMAC     string  `json:"dst_mac"`
 }
 
-func parseLinkLayer(layer gopacket.LinkLayer) (string, string) {
+func parseLinkLayer(layer gopacket.LinkLayer) *LinkLayerDoc {
+  out := new(LinkLayerDoc)
+  out.LayerType = layer.LayerType().String()
+  lType := layer.LayerType()
   switch {
-    case layer.LayerType() == layers.LayerTypeEthernet:
-      logrus.Debug(layer.LinkFlow())
+    case lType == layers.LayerTypeEthernet:
+      out.SrcMAC = layer.LinkFlow().Src().String()
+      out.DstMAC = layer.LinkFlow().Dst().String()
+    case lType == layers.LayerTypeARP:
+      logrus.Debug(layer)
   }
-  return layer.LinkFlow().Dst().String(), layer.LinkFlow().Src().String()
+  //logrus.Debug(lType)
+  return out
 }
 
-func handlePacket(packet gopacket.Packet) {
+type NetworkLayerDoc struct {
+  LayerType  string  `json:"layer_type"`
+  SrcIP      string  `json:"src_ip"`
+  DstIP      string  `json:"dst_ip"`
+}
+
+func parseNetworkLayer(layer gopacket.NetworkLayer) *NetworkLayerDoc {
+  out := new(NetworkLayerDoc)
+  out.LayerType = layer.LayerType().String()
+  lType := layer.LayerType()
+  switch {
+    case lType == layers.LayerTypeIPv6:
+      out.SrcIP = layer.NetworkFlow().Src().String()
+      out.DstIP = layer.NetworkFlow().Dst().String()
+    case lType == layers.LayerTypeIPv4:
+      out.SrcIP = layer.NetworkFlow().Src().String()
+      out.DstIP = layer.NetworkFlow().Dst().String()
+  }
+  return out
+}
+
+type TransportLayerDoc struct {
+  LayerType  string   `json:"layer_type"`
+  SrcPort    string   `json:"src_port"`
+  DstPort    string   `json:"dst_port"`
+}
+
+func parseTransportLayer(layer gopacket.TransportLayer) *TransportLayerDoc {
+  out := new(TransportLayerDoc)
+  out.LayerType = layer.LayerType().String()
+  //lType := layer.LayerType()
+  
+  return out
+}
+
+func handleArpPacket(packet gopacket.Packet) {
+  arpLayer := packet.Layer(layers.LayerTypeARP)
+  arp := arpLayer.(*layers.ARP)
+  logrus.Debug(arp)
+  logrus.Debug(packet)
+}
+
+func handleTCPUDPPacket(packet gopacket.Packet) {
   if link := packet.LinkLayer(); link != nil {
     parseLinkLayer(link)
     //logrus.Debug(link.LayerType())
     //logrus.Debug(link)
   }
   if net := packet.NetworkLayer(); net != nil {
+    parseNetworkLayer(net)
     //logrus.Debug(net.LayerType())
     //logrus.Debug(net)
   }
   if trans := packet.TransportLayer(); trans != nil {
+    parseTransportLayer(trans)
     //logrus.Debug(trans.LayerType())
     //logrus.Debug(trans)
   }
   if app := packet.ApplicationLayer(); app != nil {
     //logrus.Debug(app.LayerType())
     //logrus.Debug(app)
+  }
+}
+
+func handlePacket(packet gopacket.Packet) {
+  arpLayer := packet.Layer(layers.LayerTypeARP)
+  switch {
+    case arpLayer != nil:
+      handleArpPacket(packet)
   }
 }
 
