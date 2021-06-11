@@ -1,4 +1,4 @@
-version: "3.9" 
+version: '2.2'
 services:
   es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.13.1
@@ -58,6 +58,7 @@ services:
       - data03:/usr/share/elasticsearch/data
     networks:
       - elastic
+
   kib01:
     image: docker.elastic.co/kibana/kibana:7.13.1
     container_name: kib01
@@ -69,27 +70,14 @@ services:
     networks:
       - elastic
 
-  go-sniff:
-    build: .
-    networks:
-      - elastic
-      - host
-    restart: always
-    depends_on:
-    - "es02"
-    - "es03"
-    environment: 
-    - INTERFACE=en0
-    - FILTER=tcp
-    
 volumes:
-    data01:
-        driver: local
-    data02:
-        driver: local
-    data03:
-        driver: local
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
 
 networks:
-    elastic:
-        driver: bridge
+  elastic:
+    driver: bridge

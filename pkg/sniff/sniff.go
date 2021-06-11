@@ -7,13 +7,27 @@ import (
 	"github.com/google/gopacket"
   "github.com/google/gopacket/layers"
   "github.com/google/gopacket/pfring"
-	//"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8"
 )
-
 
 func handlePacket(packet gopacket.Packet) {
   fmt.Println(packet)
   logrus.Debug("Packet handled")
+}
+
+func iterPackets(packetSource *gopacket.PacketSource) {
+  es, err := elasticsearch.NewDefaultClient()
+    if err != nil {
+      logrus.Fatal("Error creating the client: %s", err)
+    }
+    res, err := es.Info()
+    if err != nil {
+      logrus.Fatal("Error getting response: %s", err)
+    }
+    logrus.Debug(res)
+    for packet := range packetSource.Packets() {
+      handlePacket(packet)  // Do something with a packet here.
+    }
 }
 
 //Sniff takes ifname and filter string as parameter. 
@@ -30,8 +44,6 @@ func Sniff(ifname, filter string) {
   } else {
     packetSource := gopacket.NewPacketSource(ring, layers.LinkTypeEthernet)
     logrus.Debug("New packet source initialized.")
-    for packet := range packetSource.Packets() {
-      handlePacket(packet)  // Do something with a packet here.
-    }
+    iterPackets(packetSource)
   }
 }
