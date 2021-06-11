@@ -24,6 +24,38 @@ type PacketDocument struct {
   DstPort  string   `json:"dst_port"`
 }
 
+type LinkLayerDoc struct {
+  
+}
+
+func parseLinkLayer(layer gopacket.LinkLayer) (string, string) {
+  switch {
+    case layer.LayerType() == layers.LayerTypeEthernet:
+      logrus.Debug(layer.LinkFlow())
+  }
+  return layer.LinkFlow().Dst().String(), layer.LinkFlow().Src().String()
+}
+
+func handlePacket(packet gopacket.Packet) {
+  if link := packet.LinkLayer(); link != nil {
+    parseLinkLayer(link)
+    //logrus.Debug(link.LayerType())
+    //logrus.Debug(link)
+  }
+  if net := packet.NetworkLayer(); net != nil {
+    //logrus.Debug(net.LayerType())
+    //logrus.Debug(net)
+  }
+  if trans := packet.TransportLayer(); trans != nil {
+    //logrus.Debug(trans.LayerType())
+    //logrus.Debug(trans)
+  }
+  if app := packet.ApplicationLayer(); app != nil {
+    //logrus.Debug(app.LayerType())
+    //logrus.Debug(app)
+  }
+}
+
 func insertPackets(packetsIn chan gopacket.Packet, done chan struct{}, wg *sync.WaitGroup) {
   defer wg.Done()
   es, err := elasticsearch.NewDefaultClient()
@@ -97,6 +129,7 @@ func iterPackets(packetSource *gopacket.PacketSource) {
   go func() {
     defer wg.Done()
     for packet := range packetSource.Packets() {
+      handlePacket(packet)
       packetsOut <- packet
     }
   }()
