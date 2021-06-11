@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	c "github.com/d-ashe/go-sniff/config"
-	//"github.com/d-ashe/pkg/go-sniff"
+	"github.com/d-ashe/go-sniff/pkg/sniff"
 )
 
 var (
@@ -29,7 +27,10 @@ var (
 			if err != nil {
 				logrus.Error("Unable to decode into config struct, %v", err)
 			}
-			run(configuration.Database.Conn, configuration.Node.Host, configuration.Node.Path)
+			logrus.Debug("Listening on interface - ", configuration.Interface)
+			logrus.Debug("Filter applied - ", configuration.Filter)
+			logrus.Debug("Config initialized")
+			sniff.Sniff(configuration.Interface, configuration.Filter)
 		},
 	}
 )
@@ -42,6 +43,7 @@ func SniffCmd() *cobra.Command {
 		return nil
 	}
 	cobra.OnInitialize(initConfig)
+	
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is /go/src/go-sniff/config.yml)")
 	rootCmd.PersistentFlags().StringVarP(&v, "verbosity", "v", logrus.WarnLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
 

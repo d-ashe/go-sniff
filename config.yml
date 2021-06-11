@@ -1,2 +1,2 @@
-interface: "en0"
+interface: "wlp58s0"
 filter: "tcp"

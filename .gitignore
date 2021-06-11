@@ -5,6 +5,8 @@
 *.so
 *.dylib
 
+go-sniff
+
 # Test binary, built with `go test -c`
 *.test
 
