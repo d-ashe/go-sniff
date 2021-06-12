@@ -6,6 +6,8 @@ import (
   "sync"
   "bytes"
   "encoding/json"
+  "reflect"
+
 
 	"github.com/sirupsen/logrus"
 	"github.com/google/gopacket"
@@ -48,6 +50,7 @@ type NetworkLayerDoc struct {
   LayerType  string  `json:"layer_type"`
   SrcIP      string  `json:"src_ip"`
   DstIP      string  `json:"dst_ip"`
+  Operation  uint16  `json:"operation"`
 }
 
 func parseNetworkLayer(packet gopacket.Packet) NetworkLayerDoc {
@@ -104,11 +107,19 @@ func parseApplicationLayer(packet gopacket.Packet) ApplicationLayerDoc {
 }
 
 func handleArpPacket(packet gopacket.Packet) {
-  //arpLayer := packet.Layer(layers.LayerTypeARP)
-  //arp := arpLayer.(*layers.ARP)
-  //logrus.Debug(arp)
-  //logrus.Debug(packet)
-  parseLinkLayer(packet)
+  arpLayer := packet.Layer(layers.LayerTypeARP)
+  arp := arpLayer.(*layers.ARP)
+  out := new(NetworkLayerDoc)
+  out.LayerType = arp.LayerType().String()
+  out.Operation = arp.Operation
+  //out.SrcIP = string()
+  logrus.Debug(reflect.TypeOf(arp.SourceProtAddress))
+  logrus.Debug(arp.SourceProtAddress)
+  logrus.Debug(reflect.TypeOf(arp.SourceHwAddress))
+  logrus.Debug(arp.SourceHwAddress)
+  logrus.Debug(out.Operation)
+  //parseLinkLayer(packet)
+  
 }
 
 func handleTCPUDPPacket(packet gopacket.Packet) PacketDocument {
@@ -130,10 +141,10 @@ func handlePacket(packet gopacket.Packet) PacketDocument {
   arpLayer := packet.Layer(layers.LayerTypeARP)
   switch {
     case arpLayer != nil:
-      //handleArpPacket(packet)
+      handleArpPacket(packet)
     default:
-      out := handleTCPUDPPacket(packet)
-      return out
+      //out := handleTCPUDPPacket(packet)
+      //return out
   }
   return *out
 }
