@@ -19,6 +19,7 @@ type PacketDocument struct {
   Link        LinkLayerDoc        `json:"link_layer"`
   Network     NetworkLayerDoc     `json:"network_layer"`
   Transport   TransportLayerDoc   `json:"transport_layer"`
+  App         ApplicationLayerDoc `json:"application_layer"`
 }
 
 type LinkLayerDoc struct {
@@ -89,6 +90,19 @@ func parseTransportLayer(packet gopacket.Packet) TransportLayerDoc {
   return *out
 }
 
+type ApplicationLayerDoc struct {
+  Payload string  `json:"payload"`
+}
+
+func parseApplicationLayer(packet gopacket.Packet) ApplicationLayerDoc {
+  out := new(ApplicationLayerDoc)
+  if app := packet.ApplicationLayer(); app != nil {
+    logrus.Debug(string(app.Payload()))
+    out.Payload = string(app.Payload())
+  }
+  return *out
+}
+
 func handleArpPacket(packet gopacket.Packet) {
   //arpLayer := packet.Layer(layers.LayerTypeARP)
   //arp := arpLayer.(*layers.ARP)
@@ -102,13 +116,12 @@ func handleTCPUDPPacket(packet gopacket.Packet) PacketDocument {
   link := parseLinkLayer(packet)
   net := parseNetworkLayer(packet)
   trans := parseTransportLayer(packet)
-  if app := packet.ApplicationLayer(); app != nil {
-    //logrus.Debug(app.LayerType())
-    logrus.Debug(app)
-  }
+  app := parseApplicationLayer(packet)
+  
   out.Link = link
   out.Network = net
   out.Transport = trans
+  out.App = app
   return *out
 }
 
@@ -120,7 +133,6 @@ func handlePacket(packet gopacket.Packet) PacketDocument {
       //handleArpPacket(packet)
     default:
       out := handleTCPUDPPacket(packet)
-      logrus.Debug(out)
       return out
   }
   return *out
@@ -206,10 +218,6 @@ func iterPackets(packetSource *gopacket.PacketSource) {
 
   wg.Add(1)
   insertPackets(packetsOut, done, &wg)
-  //for packet := range packetSource.Packets() {
-    //handlePacket(packet)  // Do something with a packet here.
-    //packetsOut = append(packetsOut, &packet)
-  //}
 }
 
 //Sniff takes ifname and filter string as parameter. 
