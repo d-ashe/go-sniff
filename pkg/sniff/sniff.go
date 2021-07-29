@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/google/gopacket"
   "github.com/google/gopacket/layers"
-  "github.com/google/gopacket/pfring"
+  "github.com/google/gopacket/pcap"
 	"github.com/elastic/go-elasticsearch/v8"
   "github.com/elastic/go-elasticsearch/v8/esutil"
 )
@@ -141,10 +141,12 @@ func handlePacket(packet gopacket.Packet) PacketDocument {
   arpLayer := packet.Layer(layers.LayerTypeARP)
   switch {
     case arpLayer != nil:
-      handleArpPacket(packet)
+      //handleArpPacket(packet)
+      logrus.Debug("Arp packet")
     default:
-      //out := handleTCPUDPPacket(packet)
-      //return out
+      logrus.Debug("TCP/UDP packet")
+      out := handleTCPUDPPacket(packet)
+      return out
   }
   return *out
 }
@@ -234,16 +236,14 @@ func iterPackets(packetSource *gopacket.PacketSource) {
 //Sniff takes ifname and filter string as parameter. 
 //Packets are decoded and inserted to ES in handlePacket()
 func Sniff(ifname, filter string) { 
-  logrus.Debug("Initializing new ring")
-  if ring, err := pfring.NewRing(ifname, 65536, pfring.FlagPromisc); err != nil {
-    logrus.Fatal("Failed to init new ring", err)
+  logrus.Debug("Initializing libpcap")
+  if handle, err := pcap.OpenLive(ifname, 1600, true, pcap.BlockForever); err != nil {
     panic(err)
-  } else if err := ring.SetBPFFilter(filter); err != nil {  // optional
+  } else if err := handle.SetBPFFilter(filter); err != nil {  // optional
     logrus.Debug("No filter set or failed to set filter.")
-  } else if err := ring.Enable(); err != nil { // Must do this!, or you get no packets!
     panic(err)
   } else {
-    packetSource := gopacket.NewPacketSource(ring, layers.LinkTypeEthernet)
+    packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
     logrus.Debug("New packet source initialized.")
     iterPackets(packetSource)
   }
